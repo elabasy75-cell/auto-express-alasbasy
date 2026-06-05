@@ -5,41 +5,238 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>أوتو إكسبريس العباسي</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #0a0a0a; color: white; margin: 0; }
-    .sidebar { width: 260px; background: #111; height: 100vh; position: fixed; padding: 20px; }
-    .logo { text-align: center; margin-bottom: 30px; }
-    .logo img { width: 220px; }
-    .nav a { display: block; padding: 15px; color: #ddd; text-decoration: none; margin: 8px 0; border-radius: 8px; }
-    .nav a:hover, .nav a.active { background: #ffd700; color: black; }
-    .main { margin-right: 260px; padding: 30px; }
-    .card { background: #1a1a1a; padding: 20px; border-radius: 12px; margin: 20px 0; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; background: #0a0a0a; color: #fff; }
+    
+    /* Login */
+    #loginPage { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: linear-gradient(135deg, #111, #1a1a1a); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    .login-box { background: #1a1a1a; padding: 40px; border-radius: 15px; width: 380px; text-align: center; box-shadow: 0 10px 30px rgba(255,215,0,0.3); }
+    .login-box img { width: 180px; margin-bottom: 20px; border-radius: 12px; }
+    input, select { width: 100%; padding: 14px; margin: 10px 0; background: #222; border: none; border-radius: 8px; color: white; }
+    button { width: 100%; padding: 14px; background: #ffd700; color: black; border: none; border-radius: 8px; font-size: 1.1em; font-weight: bold; cursor: pointer; margin: 8px 0; }
+
+    /* Main */
+    .sidebar { width: 280px; background: #111; height: 100vh; position: fixed; padding: 20px; overflow-y: auto; }
+    .logo img { width: 250px; display: block; margin: 0 auto 30px; border-radius: 12px; }
+    .nav a { display: block; padding: 16px 20px; color: #ddd; text-decoration: none; margin: 8px 0; border-radius: 8px; font-size: 1.1em; }
+    .nav a:hover, .nav a.active { background: #ffd700; color: #000; font-weight: bold; }
+    .main { margin-right: 280px; padding: 30px; }
+    .card { background: #1a1a1a; padding: 25px; border-radius: 12px; margin-bottom: 25px; display: none; }
+    .card.active { display: block; }
+    h1, h2 { color: #ffd700; }
+    table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+    th, td { padding: 12px; text-align: center; border-bottom: 1px solid #333; }
+    th { background: #222; }
+    .low-stock { background: #440000 !important; color: #ffaaaa; }
+    .btn-small { background: #ffd700; color: black; padding: 8px 15px; border: none; border-radius: 6px; cursor: pointer; }
   </style>
 </head>
 <body>
 
-  <div class="sidebar">
-    <div class="logo">
-      <img src="https://i.imgur.com/PL65m.jpg" alt="لوجو">
-    </div>
-    <div class="nav">
-      <a href="#" class="active">🏠 لوحة التحكم</a>
-      <a href="#">📦 كتالوج القطع</a>
-      <a href="#">📋 تاريخ الصيانة</a>
-      <a href="#">🔍 فحص السيارات</a>
-      <a href="#">📡 الفحص المتقدم</a>
-      <a href="#">🔧 الإصلاح</a>
-      <a href="#">🧾 الفواتير</a>
+  <!-- Login -->
+  <div id="loginPage">
+    <div class="login-box">
+      <img src="https://i.postimg.cc/bvPdwrc8/Whats-App-Image-2026-05-31-at-12-13-37-PM.jpg" alt="لوجو">
+      <h2>أوتو إكسبريس العباسي</h2>
+      <p>نظام إدارة المركز</p>
+      <input type="text" id="username" placeholder="اسم المستخدم" value="محمد العباسي">
+      <input type="password" id="password" placeholder="كلمة المرور" value="123456">
+      <button onclick="login()">تسجيل الدخول</button>
     </div>
   </div>
 
-  <div class="main">
-    <h1>أوتو إكسبريس العباسي</h1>
-    <div class="card">
-      <h2>لوحة التحكم</h2>
-      <p>عدد السيارات اليوم: 14</p>
-      <p>الإيرادات: 22,450 جنيه</p>
+  <!-- Main App -->
+  <div id="mainApp" style="display:none;">
+
+    <div class="sidebar">
+      <div class="logo">
+        <img src="https://i.postimg.cc/bvPdwrc8/Whats-App-Image-2026-05-31-at-12-13-37-PM.jpg" alt="لوجو">
+      </div>
+      <div class="nav">
+        <a href="#" class="active" onclick="showPage(1)">🏠 لوحة التحكم</a>
+        <a href="#" onclick="showPage(2)">📦 إدارة المخزون</a>
+        <a href="#" onclick="showPage(3)">📋 تاريخ الصيانة</a>
+        <a href="#" onclick="showPage(4)">🔍 فحص السيارات</a>
+        <a href="#" onclick="showPage(5)">🧾 الفواتير</a>
+      </div>
+    </div>
+
+    <div class="main">
+      <h1>أوتو إكسبريس العباسي</h1>
+
+      <!-- Dashboard -->
+      <div id="page1" class="card active">
+        <h2>لوحة التحكم</h2>
+        <p><strong>السيارات اليوم:</strong> 14</p>
+        <p><strong>الإيرادات:</strong> 22,450 جنيه</p>
+      </div>
+
+      <!-- Inventory -->
+      <div id="page2" class="card">
+        <h2>📦 إدارة المخزون</h2>
+        <input type="text" id="search" placeholder="بحث..." onkeyup="searchInventory()" style="width:100%;padding:10px;margin-bottom:10px;">
+        <table id="inventoryTable"></table>
+        <br>
+        <h3>إضافة قطعة جديدة</h3>
+        <input type="text" id="itemName" placeholder="اسم القطعة">
+        <input type="text" id="itemBrand" placeholder="الماركة">
+        <input type="number" id="itemPrice" placeholder="السعر">
+        <input type="number" id="itemQty" placeholder="الكمية" value="10">
+        <button class="btn-small" onclick="addItem()">إضافة للمخزون</button>
+      </div>
+
+      <!-- Invoices -->
+      <div id="page5" class="card">
+        <h2>🧾 إنشاء فاتورة</h2>
+        <input type="text" id="customerName" placeholder="اسم العميل" style="width:100%; padding:10px; margin:10px 0;">
+        
+        <select id="itemSelect" style="width:100%; padding:10px; margin:10px 0;">
+          <!-- Filled by JS -->
+        </select>
+        <input type="number" id="invoiceQty" placeholder="الكمية" value="1" style="width:100%; padding:10px; margin:10px 0;">
+        <button class="btn-small" onclick="addToInvoice()">إضافة للفاتورة</button>
+
+        <table id="invoiceTable" style="margin:20px 0;"></table>
+        <p><strong>الإجمالي: <span id="total">0</span> جنيه</strong></p>
+        <button class="btn-small" onclick="printInvoice()">🖨️ طباعة الفاتورة</button>
+      </div>
     </div>
   </div>
 
+  <script>
+    let inventory = JSON.parse(localStorage.getItem('inventory')) || [];
+    let invoiceItems = [];
+
+    function login() {
+      document.getElementById('loginPage').style.display = 'none';
+      document.getElementById('mainApp').style.display = 'block';
+      localStorage.setItem('isLoggedIn', 'true');
+      loadInventory();
+      updateItemSelect();
+    }
+
+    if (localStorage.getItem('isLoggedIn') === 'true') {
+      document.getElementById('loginPage').style.display = 'none';
+      document.getElementById('mainApp').style.display = 'block';
+      loadInventory();
+      updateItemSelect();
+    }
+
+    function showPage(n) {
+      document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+      document.getElementById('page' + n).classList.add('active');
+    }
+
+    function loadInventory() {
+      const table = document.getElementById('inventoryTable');
+      table.innerHTML = `<tr><th>الصنف</th><th>الماركة</th><th>السعر</th><th>الكمية</th><th>حالة</th></tr>`;
+      
+      inventory.forEach((item, i) => {
+        const isLow = item.qty < 5;
+        table.innerHTML += `
+          <tr class="${isLow ? 'low-stock' : ''}">
+            <td>${item.name}</td>
+            <td>${item.brand}</td>
+            <td>${item.price}</td>
+            <td>${item.qty}</td>
+            <td>${isLow ? '⚠️ منخفض' : '✅ جيد'}</td>
+          </tr>`;
+      });
+      updateItemSelect();
+    }
+
+    function addItem() {
+      const name = document.getElementById('itemName').value;
+      const brand = document.getElementById('itemBrand').value;
+      const price = Number(document.getElementById('itemPrice').value);
+      const qty = Number(document.getElementById('itemQty').value);
+
+      if (name && brand && price && qty) {
+        inventory.push({name, brand, price, qty});
+        localStorage.setItem('inventory', JSON.stringify(inventory));
+        loadInventory();
+        alert('✅ تم إضافة القطعة');
+      }
+    }
+
+    function updateItemSelect() {
+      const select = document.getElementById('itemSelect');
+      select.innerHTML = '<option value="">اختر قطعة من المخزون</option>';
+      inventory.forEach((item, i) => {
+        select.innerHTML += `<option value="${i}">${item.name} - ${item.brand} (${item.qty})</option>`;
+      });
+    }
+
+    function addToInvoice() {
+      const index = document.getElementById('itemSelect').value;
+      const qty = Number(document.getElementById('invoiceQty').value);
+
+      if (index === "" || qty <= 0) return alert("اختر قطعة وكمية");
+
+      const item = inventory[index];
+      if (item.qty < qty) return alert("الكمية غير كافية في المخزون!");
+
+      invoiceItems.push({
+        name: item.name,
+        brand: item.brand,
+        price: item.price,
+        qty: qty
+      });
+
+      // خصم من المخزون
+      item.qty -= qty;
+      localStorage.setItem('inventory', JSON.stringify(inventory));
+      
+      renderInvoice();
+      loadInventory();
+    }
+
+    function renderInvoice() {
+      let html = `<tr><th>الصنف</th><th>السعر</th><th>الكمية</th><th>الإجمالي</th></tr>`;
+      let total = 0;
+      invoiceItems.forEach(item => {
+        const subtotal = item.price * item.qty;
+        total += subtotal;
+        html += `<tr><td>${item.name}</td><td>${item.price}</td><td>${item.qty}</td><td>${subtotal}</td></tr>`;
+      });
+      document.getElementById('invoiceTable').innerHTML = html;
+      document.getElementById('total').textContent = total;
+    }
+
+    function printInvoice() {
+      if (invoiceItems.length === 0) return alert("الفاتورة فارغة");
+
+      const customer = document.getElementById('customerName').value || "عميل عام";
+      let printContent = `
+        <div style="text-align:center; font-family:Arial; padding:20px;">
+          <h1>أوتو إكسبريس العباسي</h1>
+          <p>01027058242</p>
+          <hr>
+          <h2>فاتورة</h2>
+          <p>العميل: ${customer}</p>
+          <table style="width:100%; border-collapse:collapse;">
+            <tr><th>الصنف</th><th>السعر</th><th>الكمية</th><th>الإجمالي</th></tr>
+      `;
+
+      let total = 0;
+      invoiceItems.forEach(item => {
+        const sub = item.price * item.qty;
+        total += sub;
+        printContent += `<tr><td>${item.name}</td><td>${item.price}</td><td>${item.qty}</td><td>${sub}</td></tr>`;
+      });
+
+      printContent += `</table><h3>الإجمالي: ${total} جنيه</h3><p>شكراً لتعاملك معنا</p></div>`;
+
+      const printWin = window.open('', '_blank');
+      printWin.document.write(printContent);
+      printWin.document.close();
+      printWin.print();
+    }
+
+    function searchInventory() {
+      // يمكن تحسينه لاحقاً
+      loadInventory();
+    }
+  </script>
 </body>
 </html>
