@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>أوتو إكسبريس العباسي</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #0a0a0a; color: white; margin: 0; padding: 0; }
+    .sidebar { width: 280px; background: #111; height: 100vh; position: fixed; padding: 20px; }
+    .logo img { width: 240px; }
+    .nav a { display: block; padding: 15px; color: #ddd; text-decoration: none; margin: 8px 0; border-radius: 8px; }
+    .nav a:hover, .nav a.active { background: #ffd700; color: black; }
+    .main { margin-right: 280px; padding: 30px; }
+    .card { background: #1a1a1a; padding: 20px; border-radius: 12px; margin: 20px 0; }
+  </style>
+</head>
+<body>
+
+  <div class="sidebar">
+    <div class="logo">
+      <img src="https://i.imgur.com/PL65m.jpg" alt="لوجو أوتو إكسبريس العباسي">
+    </div>
+    <div class="nav">
+      <a href="#" class="active">🏠 لوحة التحكم</a>
+      <a href="#">📦 كتالوج القطع</a>
+      <a href="#">📋 تاريخ الصيانة</a>
+      <a href="#">🔍 فحص السيارات</a>
+      <a href="#">📡 الفحص المتقدم</a>
+      <a href="#">🔧 إدارة الإصلاح</a>
+      <a href="#">🧾 الفواتير</a>
+    </div>
+  </div>
+
+  <div class="main">
+    <h1>أوتو إكسبريس العباسي</h1>
+    <div class="card">
+      <h2>لوحة التحكم الرئيسية</h2>
+      <p>عدد السيارات اليوم: 14</p>
+      <p>الإيرادات: 22,450 جنيه</p>
+    </div>
+  </div>
+
+</body>
+</html>
