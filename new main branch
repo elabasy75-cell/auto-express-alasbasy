@@ -1,0 +1,1916 @@
+import React, { useState, useMemo, useEffect } from 'react';
+import { 
+  LayoutDashboard, 
+  Car, 
+  Wrench, 
+  BookOpen, 
+  ClipboardCheck, 
+  Search, 
+  FileText, 
+  Plus, 
+  Trash2, 
+  User, 
+  Phone, 
+  Calendar, 
+  DollarSign, 
+  CheckCircle2, 
+  AlertTriangle, 
+  XCircle, 
+  Printer, 
+  Send, 
+  ChevronRight, 
+  Menu, 
+  X, 
+  Info, 
+  ShieldAlert, 
+  Cog, 
+  Clock, 
+  Sparkles,
+  SearchCode,
+  Share2
+} from 'lucide-react';
+
+// ==========================================
+// MOCK DATA (بيانات تجريبية أولية غنية ومطابقة للواقع)
+// ==========================================
+
+const INITIAL_CATALOG = [
+  { id: '1', name: 'تيل فرامل أمامي - أصلي', type: 'spare', price: 1200, category: 'الفرامل', stock: 15 },
+  { id: '2', name: 'تيل فرامل خلفي - كوري', type: 'spare', price: 850, category: 'الفرامل', stock: 20 },
+  { id: '3', name: 'زيت محرك 10,000 كم (4 لتر)', type: 'spare', price: 1650, category: 'الزيوت والفلاتر', stock: 35 },
+  { id: '4', name: 'فلتر زيت محرك', type: 'spare', price: 250, category: 'الزيوت والفلاتر', stock: 50 },
+  { id: '5', name: 'مساعدين أماميين (جوز)', type: 'spare', price: 4200, category: 'العفشة والتعليق', stock: 8 },
+  { id: '6', name: 'بوجيهات ليزر إيريديوم (طقم)', type: 'spare', price: 1800, category: 'المحرك والكهرباء', stock: 12 },
+  { id: '7', name: 'خدمة كشف كمبيوتر كامل وإعادة تعيين', type: 'service', price: 400, category: 'الكهرباء والبرمجة', stock: 999 },
+  { id: '8', name: 'مصنعية تغيير تيل فرامل', type: 'service', price: 200, category: 'الخدمات العامة', stock: 999 },
+  { id: '9', name: 'مصنعية تغيير زيت وفلتر', type: 'service', price: 100, category: 'الخدمات العامة', stock: 999 },
+  { id: '10', name: 'خدمة ضبط زوايا وترصيص', type: 'service', price: 350, category: 'العفشة والتعليق', stock: 999 },
+];
+
+const INITIAL_DIAG_CODES = [
+  { code: 'P0300', title: 'ميس فاير عشوائي / متعدد في الأسطوانات', system: 'Engine (المحرك)', gravity: 'high', description: 'يحدث خلل في احتراق الوقود داخل أسطوانة واحدة أو أكثر.', causes: 'بوجيهات تالفة، كويلات ضعيفة، انسداد في الرشاشات، أو تسريب هواء.', solution: 'فحص البوجيهات والكويلات واختبار ضغط الوقود.' },
+  { code: 'P0171', title: 'خليط وقود خفيف جداً (فقير بالوقود)', system: 'Fuel System (نظام الوقود)', gravity: 'medium', description: 'كمية الأكسجين في العادم أكبر بكثير من نسبة الوقود المثالية.', causes: 'تسريب هواء في المانيفولد، تلف حساس الهواء (MAF)، أو ضعف طرمبة البنزين.', solution: 'تنظيف أو تغيير حساس الهواء وفحص خراطيم الهواء للتأكد من عدم وجود تسريب.' },
+  { code: 'P0420', title: 'كفاءة علبة البيئة أقل من الحد المسموح', system: 'Exhaust (نظام العادم)', gravity: 'low', description: 'المحول الحفاز (علبة البيئة) لا يعمل بكفاءته المثالية لتنقية العادم.', causes: 'تلف علبة البيئة، عطل في حساس الأكسجين الخلفي، أو ترسبات كربونية.', solution: 'تنظيف علبة البيئة بمواد مخصصة أو استبدالها وفحص كفاءة حساس الأكسجين.' },
+  { code: 'P0115', title: 'عطل في دائرة حساس حرارة المحرك (ECT)', system: 'Cooling (نظام التبريد)', gravity: 'high', description: 'كمبيوتر السيارة لا يستطيع قراءة درجة حرارة سائل التبريد بشكل صحيح.', causes: 'تلف حساس الحرارة، مشكلة في التوصيلات الكهربائية، أو نقص شديد في مياه التبريد.', solution: 'قياس مقاومة الحساس وتفقد التوصيلات الكهربائية، أو تغيير الحساس.' },
+];
+
+const INITIAL_REPAIRS = [
+  {
+    id: 'R-101',
+    plateNumber: 'أ ج ط ١٢٣٤',
+    carModel: 'هيونداي إلنترا CN7 2021',
+    customerName: 'أحمد محمود العباسي',
+    customerPhone: '01002345678',
+    status: 'in-progress', // pending, in-progress, testing, ready
+    issue: 'رجة في الفرامل على السرعات العالية وصوت تكتكة مع العفشة',
+    mechanic: 'الأسطواني صبري',
+    intakeDate: '2026-06-23',
+    expectedDelivery: '2026-06-24',
+    billItems: [
+      { name: 'تيل فرامل أمامي - أصلي', price: 1200, qty: 1 },
+      { name: 'مصنعية تغيير تيل فرامل', price: 200, qty: 1 },
+      { name: 'خدمة ضبط زوايا وترصيص', price: 350, qty: 1 }
+    ],
+    discount: 50,
+    inspectionResult: null
+  },
+  {
+    id: 'R-102',
+    plateNumber: 'ق ر د ٨٨٧٧',
+    carModel: 'كيا سبورتاج 2020',
+    customerName: 'كريم عبد العزيز',
+    customerPhone: '01223456789',
+    status: 'ready',
+    issue: 'صيانة دورية 60 ألف كم وتغيير زيوت وفلاتر',
+    mechanic: 'المهندس مصطفى',
+    intakeDate: '2026-06-23',
+    expectedDelivery: '2026-06-23',
+    billItems: [
+      { name: 'زيت محرك 10,000 كم (4 لتر)', price: 1650, qty: 1 },
+      { name: 'فلتر زيت محرك', price: 250, qty: 1 },
+      { name: 'مصنعية تغيير زيت وفلتر', price: 100, qty: 1 }
+    ],
+    discount: 0,
+    inspectionResult: {
+      engine: 'pass',
+      brakes: 'pass',
+      suspension: 'warning',
+      fluids: 'pass',
+      electronics: 'pass',
+      notes: 'المساعد الخلفي الأيمن يحتاج لمتابعة مستقبلاً لوجود ترشيح زيت خفيف.'
+    }
+  },
+  {
+    id: 'R-103',
+    plateNumber: 'س ي أ ٣٤٥',
+    carModel: 'تويوتا كورولا 2018',
+    customerName: 'ممدوح الشناوي',
+    customerPhone: '01556789012',
+    status: 'pending',
+    issue: 'لمبة الأعطال Check Engine مضيئة وسحب السيارة ضعيف',
+    mechanic: 'المهندس رامي الكهربائي',
+    intakeDate: '2026-06-23',
+    expectedDelivery: '2026-06-25',
+    billItems: [
+      { name: 'خدمة كشف كمبيوتر كامل وإعادة تعيين', price: 400, qty: 1 }
+    ],
+    discount: 0,
+    inspectionResult: null
+  }
+];
+
+export default function App() {
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // States for dynamic data management
+  const [repairs, setRepairs] = useState(() => {
+    const saved = localStorage.getItem('auto_express_repairs');
+    return saved ? JSON.parse(saved) : INITIAL_REPAIRS;
+  });
+
+  const [catalog, setCatalog] = useState(() => {
+    const saved = localStorage.getItem('auto_express_catalog');
+    return saved ? JSON.parse(saved) : INITIAL_CATALOG;
+  });
+
+  const [diagCodes, setDiagCodes] = useState(INITIAL_DIAG_CODES);
+
+  // Sync with LocalStorage
+  useEffect(() => {
+    localStorage.setItem('auto_express_repairs', JSON.stringify(repairs));
+  }, [repairs]);
+
+  useEffect(() => {
+    localStorage.setItem('auto_express_catalog', JSON.stringify(catalog));
+  }, [catalog]);
+
+  // UI state for modals and creations
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isNewRepairModalOpen, setIsNewRepairModalOpen] = useState(false);
+  const [isBillModalOpen, setIsBillModalOpen] = useState(false);
+  const [selectedRepairForBill, setSelectedRepairForBill] = useState(null);
+  const [isInspectionModalOpen, setIsInspectionModalOpen] = useState(false);
+  const [selectedRepairForInspection, setSelectedRepairForInspection] = useState(null);
+  
+  // States for diagnostic lookup
+  const [diagSearch, setDiagSearch] = useState('');
+  const [matchedDiag, setMatchedDiag] = useState(null);
+
+  // States for New Repair Intake Form
+  const [newPlate, setNewPlate] = useState('');
+  const [newModel, setNewModel] = useState('');
+  const [newCustName, setNewCustName] = useState('');
+  const [newCustPhone, setNewCustPhone] = useState('');
+  const [newIssue, setNewIssue] = useState('');
+  const [newMechanic, setNewMechanic] = useState('غير محدد');
+
+  // Fast Bill Editing state
+  const [billItemsTemp, setBillItemsTemp] = useState([]);
+  const [billDiscountTemp, setBillDiscountTemp] = useState(0);
+
+  // Inspection Temp State
+  const [inspectEngine, setInspectEngine] = useState('pass');
+  const [inspectBrakes, setInspectBrakes] = useState('pass');
+  const [inspectSuspension, setInspectSuspension] = useState('pass');
+  const [inspectFluids, setInspectFluids] = useState('pass');
+  const [inspectElectronics, setInspectElectronics] = useState('pass');
+  const [inspectNotes, setInspectNotes] = useState('');
+
+  // Slogan notification/ticker
+  const [alertSlogan, setAlertSlogan] = useState(true);
+
+  // Quick stats calculations
+  const stats = useMemo(() => {
+    const totalActive = repairs.filter(r => r.status !== 'ready').length;
+    const completedToday = repairs.filter(r => r.status === 'ready').length;
+    const pendingCount = repairs.filter(r => r.status === 'pending').length;
+    const totalRevenue = repairs.reduce((acc, r) => {
+      const subtotal = r.billItems.reduce((s, item) => s + (item.price * (item.qty || 1)), 0);
+      return acc + (subtotal - (r.discount || 0));
+    }, 0);
+
+    return { totalActive, completedToday, pendingCount, totalRevenue };
+  }, [repairs]);
+
+  // Handle Adding a New Repair
+  const handleCreateRepair = (e) => {
+    e.preventDefault();
+    if (!newPlate || !newModel || !newCustName) return;
+
+    const newJob = {
+      id: `R-${100 + repairs.length + 1}`,
+      plateNumber: newPlate,
+      carModel: newModel,
+      customerName: newCustName,
+      customerPhone: newCustPhone || 'بدون رقم هاتف',
+      status: 'pending',
+      issue: newIssue,
+      mechanic: newMechanic,
+      intakeDate: new Date().toISOString().split('T')[0],
+      expectedDelivery: new Date(Date.now() + 86400000).toISOString().split('T')[0], // غدا بشكل افتراضي
+      billItems: [],
+      discount: 0,
+      inspectionResult: null
+    };
+
+    setRepairs([newJob, ...repairs]);
+    setIsNewRepairModalOpen(false);
+    // Clear state
+    setNewPlate('');
+    setNewModel('');
+    setNewCustName('');
+    setNewCustPhone('');
+    setNewIssue('');
+    setNewMechanic('غير محدد');
+  };
+
+  // Handle changing progress status
+  const handleStatusChange = (repairId, newStatus) => {
+    setRepairs(prev => prev.map(r => r.id === repairId ? { ...r, status: newStatus } : r));
+  };
+
+  // Open Fast Bill Editor
+  const openBillEditor = (repair) => {
+    setSelectedRepairForBill(repair);
+    setBillItemsTemp([...repair.billItems]);
+    setBillDiscountTemp(repair.discount || 0);
+    setIsBillModalOpen(true);
+  };
+
+  // Save Fast Bill
+  const saveBill = () => {
+    setRepairs(prev => prev.map(r => {
+      if (r.id === selectedRepairForBill.id) {
+        return {
+          ...r,
+          billItems: billItemsTemp,
+          discount: Number(billDiscountTemp)
+        };
+      }
+      return r;
+    }));
+    setIsBillModalOpen(false);
+  };
+
+  // Add Item to Bill Temp
+  const addItemToBillTemp = (catalogItem) => {
+    const exists = billItemsTemp.find(i => i.name === catalogItem.name);
+    if (exists) {
+      setBillItemsTemp(prev => prev.map(i => i.name === catalogItem.name ? { ...i, qty: (i.qty || 1) + 1 } : i));
+    } else {
+      setBillItemsTemp(prev => [...prev, { name: catalogItem.name, price: catalogItem.price, qty: 1 }]);
+    }
+  };
+
+  const removeBillItemTemp = (index) => {
+    setBillItemsTemp(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Open Inspection Editor
+  const openInspectionEditor = (repair) => {
+    setSelectedRepairForInspection(repair);
+    if (repair.inspectionResult) {
+      setInspectEngine(repair.inspectionResult.engine);
+      setInspectBrakes(repair.inspectionResult.brakes);
+      setInspectSuspension(repair.inspectionResult.suspension);
+      setInspectFluids(repair.inspectionResult.fluids);
+      setInspectElectronics(repair.inspectionResult.electronics);
+      setInspectNotes(repair.inspectionResult.notes);
+    } else {
+      setInspectEngine('pass');
+      setInspectBrakes('pass');
+      setInspectSuspension('pass');
+      setInspectFluids('pass');
+      setInspectElectronics('pass');
+      setInspectNotes('');
+    }
+    setIsInspectionModalOpen(true);
+  };
+
+  // Save Inspection Result
+  const saveInspection = () => {
+    setRepairs(prev => prev.map(r => {
+      if (r.id === selectedRepairForInspection.id) {
+        return {
+          ...r,
+          inspectionResult: {
+            engine: inspectEngine,
+            brakes: inspectBrakes,
+            suspension: inspectSuspension,
+            fluids: inspectFluids,
+            electronics: inspectElectronics,
+            notes: inspectNotes
+          }
+        };
+      }
+      return r;
+    }));
+    setIsInspectionModalOpen(false);
+  };
+
+  // OBD2 Diagnosis Search
+  const handleDiagSearch = (code) => {
+    const formattedCode = code.trim().toUpperCase();
+    setDiagSearch(formattedCode);
+    const match = diagCodes.find(c => c.code === formattedCode);
+    setMatchedDiag(match || null);
+  };
+
+  // Quick Action: Add new custom diagnostic code
+  const [newDiagCode, setNewDiagCode] = useState('');
+  const [newDiagTitle, setNewDiagTitle] = useState('');
+  const [newDiagDesc, setNewDiagDesc] = useState('');
+  const [newDiagCauses, setNewDiagCauses] = useState('');
+  const [newDiagSol, setNewDiagSol] = useState('');
+  const [isDiagAddOpen, setIsDiagAddOpen] = useState(false);
+
+  const addCustomDiagCode = () => {
+    if (!newDiagCode || !newDiagTitle) return;
+    const item = {
+      code: newDiagCode.trim().toUpperCase(),
+      title: newDiagTitle,
+      system: 'عام ومتقدم',
+      gravity: 'medium',
+      description: newDiagDesc,
+      causes: newDiagCauses,
+      solution: newDiagSol
+    };
+    setDiagCodes([item, ...diagCodes]);
+    setIsDiagAddOpen(false);
+    handleDiagSearch(newDiagCode);
+  };
+
+  // Catalog Item Creation
+  const [newCatName, setNewCatName] = useState('');
+  const [newCatType, setNewCatType] = useState('spare');
+  const [newCatPrice, setNewCatPrice] = useState('');
+  const [newCatCategory, setNewCatCategory] = useState('أخرى');
+  const [newCatStock, setNewCatStock] = useState(10);
+  const [isCatAddOpen, setIsCatAddOpen] = useState(false);
+
+  const handleAddCatalogItem = (e) => {
+    e.preventDefault();
+    if (!newCatName || !newCatPrice) return;
+    const newItem = {
+      id: `C-${Date.now()}`,
+      name: newCatName,
+      type: newCatType,
+      price: Number(newCatPrice),
+      category: newCatCategory,
+      stock: newCatType === 'spare' ? Number(newCatStock) : 999
+    };
+    setCatalog([newItem, ...catalog]);
+    setNewCatName('');
+    setNewCatPrice('');
+    setNewCatStock(10);
+    setIsCatAddOpen(false);
+  };
+
+  // Delete Repair Job
+  const handleDeleteRepair = (id) => {
+    if(window.confirm('هل أنت متأكد من حذف أمر الإصلاح هذا نهائياً؟')) {
+      setRepairs(prev => prev.filter(r => r.id !== id));
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-yellow-500 selection:text-slate-900" dir="rtl">
+      
+      {/* Slogan Banner Top */}
+      {alertSlogan && (
+        <div className="bg-gradient-to-r from-yellow-500 via-amber-400 to-yellow-600 text-slate-950 px-4 py-2 flex items-center justify-between text-xs sm:text-sm font-bold shadow-md relative overflow-hidden">
+          <div className="absolute inset-0 bg-yellow-400/20 animate-pulse"></div>
+          <div className="relative z-10 flex items-center gap-2">
+            <span className="bg-slate-900 text-yellow-400 px-2 py-0.5 rounded text-[10px]">حكمة اليوم</span>
+            <span>🚗 "إرتاح وسلّمنا المفتاح" .. دقة، جودة، وسرعة فائقة في مركز أوتو إكسبريس العباسي!</span>
+          </div>
+          <button 
+            onClick={() => setAlertSlogan(false)} 
+            className="relative z-10 hover:bg-slate-900/10 p-1 rounded-full transition"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
+
+      {/* HEADER WITH RECREATED PREMIUM CSS/SVG LOGO */}
+      <header className="bg-slate-900 border-b border-yellow-500/30 sticky top-0 z-40 backdrop-blur px-4 py-3 shadow-lg">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          
+          {/* Logo Brand Segment (Inspired by the uploaded logo image) */}
+          <div className="flex items-center gap-3">
+            {/* Hamburger for Mobile */}
+            <button 
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="lg:hidden p-2 text-slate-300 hover:text-yellow-400 hover:bg-slate-800 rounded transition"
+            >
+              <Menu size={24} />
+            </button>
+            
+            {/* The SVG Rebuilt Logo of Auto Express Al Abbasi */}
+            <div className="flex items-center gap-2 cursor-pointer" onClick={() => setActiveTab('dashboard')}>
+              <div className="relative flex items-center justify-center p-1 bg-gradient-to-br from-yellow-500 to-amber-600 rounded-lg shadow-lg hover:rotate-6 transition duration-300">
+                <svg width="45" height="45" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-slate-950">
+                  {/* Outer gear */}
+                  <path d="M50 15c-1.5 0-3 1.2-3.3 2.7l-.8 4c-2.4.7-4.6 1.8-6.6 3.3l-3.3-2.5c-1.2-1-3-.7-4 1L27 29.5c-1 1.2-.7 3 1 4l3 2.2c-.8 2.3-1.3 4.8-1.5 7.3l-4 .5c-1.5.2-2.5 1.5-2.5 3v7c0 1.5 1 2.8 2.5 3l4 .5c.2 2.5.7 5 1.5 7.3l-3 2.2c-1.7 1-2 2.8-1 4l5 6c1 1.7 2.8 2 4 1l3.3-2.5c2 1.5 4.2 2.6 6.6 3.3l.8 4c.3 1.5 1.8 2.7 3.3 2.7h7c1.5 0 3-1.2 3.3-2.7l.8-4c2.4-.7 4.6-1.8 6.6-3.3l3.3 2.5c1.2 1 3 .7 4-1l5-6c1-1.2.7-3-1-4l-3-2.2c.8-2.3 1.3-4.8 1.5-7.3l4-.5c1.5-.2 2.5-1.5 2.5-3v-7c0-1.5-1-2.8-2.5-3l-4-.5c-.2-2.5-.7-5-1.5-7.3l3-2.2c1.7-1 2-2.8 1-4l-5-6c-1-1.7-2.8-2-4-1l-3.3 2.5c-2-1.5-4.2-2.6-6.6-3.3l-.8-4C53 16.2 51.5 15 50 15zm0 25c5.5 0 10 4.5 10 10s-4.5 10-10 10-10-4.5-10-10 4.5-10 10-10z" fill="currentColor" />
+                  {/* Car silhouette overlay in gear center */}
+                  <path d="M40 50h20l3 4H37l3-4z" fill="#fff" />
+                </svg>
+                {/* Active pulse dot */}
+                <div className="absolute top-0 right-0 w-3 h-3 bg-green-500 border-2 border-slate-900 rounded-full animate-ping"></div>
+              </div>
+
+              {/* Textual Brand Component */}
+              <div className="hidden md:flex flex-col">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xl font-extrabold tracking-wider bg-gradient-to-r from-white via-slate-100 to-yellow-400 bg-clip-text text-transparent">أوتو إكسبريس</span>
+                  <span className="bg-yellow-500 text-slate-950 text-[10px] font-black px-1.5 py-0.5 rounded">العباسي</span>
+                </div>
+                <span className="text-[10px] text-slate-400 font-medium tracking-widest flex items-center gap-1">
+                  <Sparkles size={10} className="text-yellow-500 animate-spin" />
+                  المركز المتكامل لصيانة ورعاية السيارات
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Stats Banner (Header Right) */}
+          <div className="flex items-center gap-3 sm:gap-6">
+            <div className="text-left md:text-right hidden sm:block">
+              <span className="text-[10px] text-slate-400 block font-semibold">حالة الورشة اليوم</span>
+              <div className="flex gap-3 text-xs mt-0.5">
+                <span className="text-amber-400 font-bold flex items-center gap-1">
+                  <Clock size={12} /> {stats.totalActive} سيارات نشطة
+                </span>
+                <span className="text-green-400 font-bold flex items-center gap-1">
+                  <CheckCircle2 size={12} /> {stats.completedToday} منتهية
+                </span>
+              </div>
+            </div>
+
+            {/* Quick Action Buttons */}
+            <button 
+              onClick={() => {
+                setActiveTab('repairs');
+                setIsNewRepairModalOpen(true);
+              }}
+              className="bg-yellow-500 hover:bg-yellow-600 text-slate-950 text-xs sm:text-sm font-bold px-3 sm:px-4 py-2 rounded-lg shadow-lg flex items-center gap-1.5 transition active:scale-95"
+            >
+              <Plus size={16} />
+              <span>أمر إصلاح جديد</span>
+            </button>
+          </div>
+
+        </div>
+      </header>
+
+      {/* SYSTEM BODY CONTAINER */}
+      <div className="flex-1 flex overflow-hidden">
+        
+        {/* SIDEBAR NAVIGATION */}
+        <aside className={`
+          fixed inset-y-0 right-0 z-30 w-64 bg-slate-900/95 border-l border-slate-800 flex flex-col justify-between transform transition-transform duration-300 lg:static lg:transform-none lg:bg-slate-900/50
+          ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'}
+        `}>
+          <div>
+            {/* Header info in Sidebar for mobile */}
+            <div className="p-4 border-b border-slate-800 flex items-center justify-between lg:hidden">
+              <span className="font-bold text-yellow-400">القائمة الرئيسية</span>
+              <button onClick={() => setSidebarOpen(false)} className="p-1 hover:bg-slate-800 rounded">
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Nav List */}
+            <nav className="p-4 space-y-1.5">
+              
+              <button 
+                onClick={() => { setActiveTab('dashboard'); setSidebarOpen(false); }}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-bold transition ${activeTab === 'dashboard' ? 'bg-yellow-500 text-slate-950' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+              >
+                <LayoutDashboard size={18} />
+                <span>لوحة التحكم الرئيسية</span>
+              </button>
+
+              <button 
+                onClick={() => { setActiveTab('repairs'); setSidebarOpen(false); }}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-bold transition ${activeTab === 'repairs' ? 'bg-yellow-500 text-slate-950' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+              >
+                <Wrench size={18} />
+                <span>أوامر الإصلاح والورشة</span>
+                <span className="mr-auto bg-slate-950/25 text-xs px-2 py-0.5 rounded-full">{repairs.length}</span>
+              </button>
+
+              <button 
+                onClick={() => { setActiveTab('catalog'); setSidebarOpen(false); }}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-bold transition ${activeTab === 'catalog' ? 'bg-yellow-500 text-slate-950' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+              >
+                <BookOpen size={18} />
+                <span>كتالوج قطع الغيار</span>
+              </button>
+
+              <button 
+                onClick={() => { setActiveTab('diag'); setSidebarOpen(false); }}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-bold transition ${activeTab === 'diag' ? 'bg-yellow-500 text-slate-950' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+              >
+                <Info size={18} />
+                <span>مساعد التشخيص (OBD2)</span>
+              </button>
+
+              <button 
+                onClick={() => { setActiveTab('history'); setSidebarOpen(false); }}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-bold transition ${activeTab === 'history' ? 'bg-yellow-500 text-slate-950' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+              >
+                <Search size={18} />
+                <span>أرشيف وسجل السيارات</span>
+              </button>
+
+            </nav>
+          </div>
+
+          {/* Sidebar Footer with Slogan Graphic */}
+          <div className="p-4 border-t border-slate-800">
+            <div className="bg-slate-950 p-3 rounded-lg border border-yellow-500/20 text-center">
+              <p className="text-[10px] text-yellow-500 font-bold uppercase tracking-wide">شعارنا الخالد</p>
+              <p className="text-sm font-black text-white mt-1">إرتاح وسلّمنا المفتاح</p>
+              <div className="mt-2 text-[9px] text-slate-400">أوتو إكسبريس العباسي &copy; 2026</div>
+            </div>
+          </div>
+
+        </aside>
+
+        {/* OVERLAY FOR MOBILE SIDEBAR */}
+        {sidebarOpen && (
+          <div 
+            onClick={() => setSidebarOpen(false)}
+            className="fixed inset-0 z-20 bg-black/60 lg:hidden"
+          />
+        )}
+
+        {/* MAIN APP WORKSPACE CONTENT */}
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
+          
+          {/* ==========================================
+              TAB 1: DASHBOARD / LOA7T AL TAHAKKUM
+             ========================================== */}
+          {activeTab === 'dashboard' && (
+            <div className="space-y-6">
+              
+              {/* Grid Cards Stats */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                
+                <div className="bg-slate-900 p-4 rounded-xl border border-slate-800 hover:border-yellow-500/30 transition shadow-lg flex items-center justify-between">
+                  <div>
+                    <span className="text-xs text-slate-400 font-bold">السيارات قيد الإصلاح حالياً</span>
+                    <h3 className="text-2xl font-black text-amber-500 mt-1">{stats.totalActive} سيارات</h3>
+                  </div>
+                  <div className="p-3 bg-amber-500/10 text-amber-500 rounded-lg">
+                    <Wrench size={24} />
+                  </div>
+                </div>
+
+                <div className="bg-slate-900 p-4 rounded-xl border border-slate-800 hover:border-yellow-500/30 transition shadow-lg flex items-center justify-between">
+                  <div>
+                    <span className="text-xs text-slate-400 font-bold">السيارات الجاهزة للتسليم</span>
+                    <h3 className="text-2xl font-black text-green-500 mt-1">{stats.completedToday} سيارات</h3>
+                  </div>
+                  <div className="p-3 bg-green-500/10 text-green-500 rounded-lg">
+                    <CheckCircle2 size={24} />
+                  </div>
+                </div>
+
+                <div className="bg-slate-900 p-4 rounded-xl border border-slate-800 hover:border-yellow-500/30 transition shadow-lg flex items-center justify-between">
+                  <div>
+                    <span className="text-xs text-slate-400 font-bold">سيارات بانتظار الفحص والتشخيص</span>
+                    <h3 className="text-2xl font-black text-cyan-500 mt-1">{stats.pendingCount} سيارات</h3>
+                  </div>
+                  <div className="p-3 bg-cyan-500/10 text-cyan-500 rounded-lg">
+                    <Car size={24} />
+                  </div>
+                </div>
+
+                <div className="bg-slate-900 p-4 rounded-xl border border-slate-800 hover:border-yellow-500/30 transition shadow-lg flex items-center justify-between">
+                  <div>
+                    <span className="text-xs text-slate-400 font-bold">إجمالي الفواتير النشطة (جنيه)</span>
+                    <h3 className="text-2xl font-black text-yellow-500 mt-1">{stats.totalRevenue.toLocaleString()} ج.م</h3>
+                  </div>
+                  <div className="p-3 bg-yellow-500/10 text-yellow-500 rounded-lg">
+                    <DollarSign size={24} />
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Slogan Design banner in dashboard */}
+              <div className="bg-gradient-to-r from-slate-900 via-slate-900 to-yellow-950 p-6 rounded-2xl border border-yellow-500/20 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
+                <div className="absolute right-0 top-0 opacity-10 pointer-events-none transform translate-x-12 translate-y-[-10px] scale-150">
+                  <svg width="200" height="200" viewBox="0 0 100 100" fill="yellow">
+                    <circle cx="50" cy="50" r="40" stroke="yellow" strokeWidth="8"/>
+                  </svg>
+                </div>
+                <div className="space-y-2 relative z-10 text-center md:text-right">
+                  <h2 className="text-xl sm:text-2xl font-black text-yellow-400">أهلاً بك في نظام إدارة "أوتو إكسبريس العباسي" الموحد</h2>
+                  <p className="text-slate-300 text-sm max-w-2xl">
+                    شاشتك الذكية لإدارة الورشة، تسعير الفواتير، فحص السيارات بالكامل وإصدار الفواتير الفورية بنقرة زر واحدة.
+                  </p>
+                </div>
+                <div className="flex gap-3">
+                  <button 
+                    onClick={() => setActiveTab('repairs')}
+                    className="bg-yellow-500 hover:bg-yellow-600 text-slate-950 px-4 py-2.5 rounded-lg text-sm font-bold transition shadow-lg"
+                  >
+                    عرض ورشة العمل
+                  </button>
+                  <button 
+                    onClick={() => setActiveTab('history')}
+                    className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2.5 rounded-lg text-sm font-bold transition"
+                  >
+                    بحث سجل صيانة
+                  </button>
+                </div>
+              </div>
+
+              {/* Active Vehicles Board Summary */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                {/* Active Cars List in dashboard */}
+                <div className="bg-slate-900 p-5 rounded-xl border border-slate-800 lg:col-span-2">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-bold text-white text-lg flex items-center gap-2">
+                      <Wrench size={20} className="text-yellow-500" />
+                      السيارات النشطة بالورشة حالياً
+                    </h3>
+                    <span className="text-xs text-slate-400 hover:underline cursor-pointer" onClick={() => setActiveTab('repairs')}>عرض الكل &larr;</span>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    {repairs.filter(r => r.status !== 'ready').slice(0, 3).map((repair) => (
+                      <div key={repair.id} className="bg-slate-950 p-4 rounded-lg border border-slate-850 hover:border-slate-700 transition flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="bg-slate-900 text-yellow-400 border border-yellow-500/30 text-xs font-black px-2.5 py-1 rounded">
+                              {repair.plateNumber}
+                            </span>
+                            <h4 className="font-bold text-white text-sm">{repair.carModel}</h4>
+                          </div>
+                          <p className="text-xs text-slate-400 flex items-center gap-1">
+                            <User size={12} /> {repair.customerName}
+                          </p>
+                          <p className="text-xs text-amber-400 font-semibold">{repair.issue}</p>
+                        </div>
+                        <div className="flex items-center gap-2 self-end sm:self-auto">
+                          <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${
+                            repair.status === 'pending' ? 'bg-cyan-500/10 text-cyan-400' :
+                            repair.status === 'in-progress' ? 'bg-amber-500/10 text-amber-400' :
+                            'bg-indigo-500/10 text-indigo-400'
+                          }`}>
+                            {repair.status === 'pending' ? 'بانتظار الفحص' :
+                             repair.status === 'in-progress' ? 'قيد العمل' : 'تجربة السيارة'}
+                          </span>
+                          <button 
+                            onClick={() => openBillEditor(repair)}
+                            className="bg-slate-850 hover:bg-slate-800 text-slate-300 p-2 rounded-lg text-xs transition"
+                            title="تعديل الفاتورة والمصنعية"
+                          >
+                            <DollarSign size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    {repairs.filter(r => r.status !== 'ready').length === 0 && (
+                      <p className="text-slate-500 text-center py-6 text-sm">لا توجد سيارات قيد الإصلاح حالياً بالورشة.</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Quick Diagnostics lookup Card */}
+                <div className="bg-slate-900 p-5 rounded-xl border border-slate-800 flex flex-col justify-between">
+                  <div className="space-y-4">
+                    <h3 className="font-bold text-white text-lg flex items-center gap-2">
+                      <ShieldAlert size={20} className="text-yellow-500" />
+                      مشخص الأعطال السريع
+                    </h3>
+                    <p className="text-xs text-slate-400">ابحث سريعاً عن الرمز الظاهر على كمبيوتر كشف الأعطال (مثل: P0300, P0171) لمعرفة دلالة الرمز فوراً.</p>
+                    <div className="flex gap-2">
+                      <input 
+                        type="text" 
+                        placeholder="أدخل رمز العطل هنا..." 
+                        value={diagSearch}
+                        onChange={(e) => handleDiagSearch(e.target.value)}
+                        className="bg-slate-950 border border-slate-800 focus:border-yellow-500 rounded-lg px-3 py-2 text-sm w-full outline-none transition text-center uppercase font-mono tracking-widest placeholder:text-slate-600"
+                      />
+                    </div>
+
+                    {matchedDiag ? (
+                      <div className="bg-yellow-500/5 p-3 rounded-lg border border-yellow-500/20 space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="font-bold text-yellow-500 font-mono text-base">{matchedDiag.code}</span>
+                          <span className="bg-red-500/20 text-red-400 text-[10px] font-bold px-2 py-0.5 rounded uppercase">خطير</span>
+                        </div>
+                        <h4 className="font-bold text-white text-sm">{matchedDiag.title}</h4>
+                        <p className="text-xs text-slate-400">{matchedDiag.description}</p>
+                        <div className="text-[11px] text-slate-300 border-t border-slate-800 pt-2">
+                          <strong className="text-yellow-500">السبب المحتمل:</strong> {matchedDiag.causes}
+                        </div>
+                      </div>
+                    ) : (
+                      diagSearch && (
+                        <div className="bg-slate-950 p-3 rounded-lg border border-slate-850 text-center">
+                          <p className="text-xs text-slate-500">لا تتوفر تفاصيل لهذا الكود بالذاكرة المحلية حالياً.</p>
+                          <button 
+                            onClick={() => {
+                              setNewDiagCode(diagSearch);
+                              setIsDiagAddOpen(true);
+                              setActiveTab('diag');
+                            }}
+                            className="text-[10px] text-yellow-500 underline mt-1.5 inline-block"
+                          >
+                            + إضافة هذا الكود يدوياً الآن
+                          </button>
+                        </div>
+                      )
+                    )}
+                  </div>
+
+                  <div className="bg-slate-950/50 p-3 rounded-lg border border-slate-800/40 text-xs text-slate-400 mt-4">
+                    💡 <strong>نصيحة أوتو إكسبريس:</strong> تذكر دائماً مسح أكواد الأعطال القديمة بعد الإصلاح لضمان عودة كمبيوتر السيارة للعمل المثالي!
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+          )}
+
+          {/* ==========================================
+              TAB 2: CENTER MANAGEMENT / AL WARSHA
+             ========================================== */}
+          {activeTab === 'repairs' && (
+            <div className="space-y-6">
+              
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-black text-white">إدارة صيانة ورشة أوتو إكسبريس</h2>
+                  <p className="text-slate-400 text-sm">مراقبة حالات السيارات ومتابعة المهندسين والفنيين من الاستلام للجاهزية.</p>
+                </div>
+                
+                {/* Search / Filter repair */}
+                <div className="flex gap-2">
+                  <div className="relative">
+                    <input 
+                      type="text" 
+                      placeholder="بحث برقم اللوحة، الهاتف أو العميل..." 
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="bg-slate-900 border border-slate-800 rounded-lg pl-3 pr-10 py-2 text-sm outline-none focus:border-yellow-500 transition w-full sm:w-64"
+                    />
+                    <Search className="absolute right-3 top-2.5 text-slate-500" size={16} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Status Lanes / Kanban Board style for PC & Fluid list for mobile */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                
+                {/* Lane 1: Pending (بانتظار الفحص) */}
+                <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-800 space-y-4">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <span className="font-bold text-cyan-400 flex items-center gap-1.5 text-sm">
+                      <span className="w-2.5 h-2.5 rounded-full bg-cyan-400"></span>
+                      بانتظار الفحص والتسجيل
+                    </span>
+                    <span className="bg-slate-800 text-slate-400 text-xs px-2.5 py-0.5 rounded-full">
+                      {repairs.filter(r => r.status === 'pending').length}
+                    </span>
+                  </div>
+
+                  <div className="space-y-3">
+                    {repairs.filter(r => r.status === 'pending' && (
+                      r.plateNumber.includes(searchQuery) || 
+                      r.customerName.includes(searchQuery) || 
+                      r.carModel.includes(searchQuery)
+                    )).map(repair => (
+                      <RepairCard 
+                        key={repair.id} 
+                        repair={repair} 
+                        onStatusChange={handleStatusChange} 
+                        openBill={openBillEditor}
+                        openInspect={openInspectionEditor}
+                        onDelete={handleDeleteRepair}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Lane 2: In Progress (قيد العمل والصيانة) */}
+                <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-800 space-y-4">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <span className="font-bold text-amber-500 flex items-center gap-1.5 text-sm">
+                      <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                      قيد العمل الفني
+                    </span>
+                    <span className="bg-slate-800 text-slate-400 text-xs px-2.5 py-0.5 rounded-full">
+                      {repairs.filter(r => r.status === 'in-progress').length}
+                    </span>
+                  </div>
+
+                  <div className="space-y-3">
+                    {repairs.filter(r => r.status === 'in-progress' && (
+                      r.plateNumber.includes(searchQuery) || 
+                      r.customerName.includes(searchQuery) || 
+                      r.carModel.includes(searchQuery)
+                    )).map(repair => (
+                      <RepairCard 
+                        key={repair.id} 
+                        repair={repair} 
+                        onStatusChange={handleStatusChange} 
+                        openBill={openBillEditor}
+                        openInspect={openInspectionEditor}
+                        onDelete={handleDeleteRepair}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Lane 3: Testing & Quality (تجربة السيارة والجودة) */}
+                <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-800 space-y-4">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <span className="font-bold text-indigo-400 flex items-center gap-1.5 text-sm">
+                      <span className="w-2.5 h-2.5 rounded-full bg-indigo-400"></span>
+                      تحت تجربة القيادة
+                    </span>
+                    <span className="bg-slate-800 text-slate-400 text-xs px-2.5 py-0.5 rounded-full">
+                      {repairs.filter(r => r.status === 'testing').length}
+                    </span>
+                  </div>
+
+                  <div className="space-y-3">
+                    {repairs.filter(r => r.status === 'testing' && (
+                      r.plateNumber.includes(searchQuery) || 
+                      r.customerName.includes(searchQuery) || 
+                      r.carModel.includes(searchQuery)
+                    )).map(repair => (
+                      <RepairCard 
+                        key={repair.id} 
+                        repair={repair} 
+                        onStatusChange={handleStatusChange} 
+                        openBill={openBillEditor}
+                        openInspect={openInspectionEditor}
+                        onDelete={handleDeleteRepair}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Lane 4: Done (جاهزة للتسليم) */}
+                <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-800 space-y-4">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <span className="font-bold text-green-400 flex items-center gap-1.5 text-sm">
+                      <span className="w-2.5 h-2.5 rounded-full bg-green-400"></span>
+                      جاهزة للتسليم للعميل
+                    </span>
+                    <span className="bg-slate-800 text-slate-400 text-xs px-2.5 py-0.5 rounded-full">
+                      {repairs.filter(r => r.status === 'ready').length}
+                    </span>
+                  </div>
+
+                  <div className="space-y-3">
+                    {repairs.filter(r => r.status === 'ready' && (
+                      r.plateNumber.includes(searchQuery) || 
+                      r.customerName.includes(searchQuery) || 
+                      r.carModel.includes(searchQuery)
+                    )).map(repair => (
+                      <RepairCard 
+                        key={repair.id} 
+                        repair={repair} 
+                        onStatusChange={handleStatusChange} 
+                        openBill={openBillEditor}
+                        openInspect={openInspectionEditor}
+                        onDelete={handleDeleteRepair}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+          )}
+
+          {/* ==========================================
+              TAB 3: CATALOG / CUTAA AL GHEIAR
+             ========================================== */}
+          {activeTab === 'catalog' && (
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-black text-white">كتالوج قطع الغيار والخدمات</h2>
+                  <p className="text-slate-400 text-sm">قائمة شاملة للأسعار الرسمية لقطع الغيار والمصنعيات المعتمدة في مركزنا.</p>
+                </div>
+                
+                <button 
+                  onClick={() => setIsCatAddOpen(!isCatAddOpen)}
+                  className="bg-yellow-500 hover:bg-yellow-600 text-slate-950 text-sm font-bold px-4 py-2 rounded-lg flex items-center gap-1.5 transition shadow"
+                >
+                  <Plus size={16} />
+                  <span>إضافة بند / خدمة جديدة</span>
+                </button>
+              </div>
+
+              {/* Add item collapsible block */}
+              {isCatAddOpen && (
+                <form onSubmit={handleAddCatalogItem} className="bg-slate-900 p-5 rounded-xl border border-yellow-500/20 grid grid-cols-1 md:grid-cols-5 gap-4">
+                  <div className="md:col-span-2 space-y-1">
+                    <label className="text-xs text-slate-400 font-bold">اسم القطعة أو الخدمة</label>
+                    <input 
+                      type="text" 
+                      placeholder="مثال: زيت فرامل أمريكي DOT4" 
+                      value={newCatName}
+                      onChange={(e) => setNewCatName(e.target.value)}
+                      required
+                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm outline-none focus:border-yellow-500 text-white"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-slate-400 font-bold">النوع</label>
+                    <select 
+                      value={newCatType}
+                      onChange={(e) => setNewCatType(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm outline-none focus:border-yellow-500 text-white"
+                    >
+                      <option value="spare">قطعة غيار</option>
+                      <option value="service">مصنعية / خدمة</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-slate-400 font-bold">السعر المقدر (جنيه)</label>
+                    <input 
+                      type="number" 
+                      placeholder="السعر بالجنيه" 
+                      value={newCatPrice}
+                      onChange={(e) => setNewCatPrice(e.target.value)}
+                      required
+                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm outline-none focus:border-yellow-500 text-white"
+                    />
+                  </div>
+                  <div className="flex items-end">
+                    <button 
+                      type="submit" 
+                      className="w-full bg-yellow-500 hover:bg-yellow-600 text-slate-950 font-bold py-2 rounded-lg text-sm transition"
+                    >
+                      تأكيد وحفظ
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {/* Catalog Table */}
+              <div className="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden">
+                <div className="p-4 border-b border-slate-800 flex flex-col sm:flex-row gap-4 justify-between items-center bg-slate-900/50">
+                  <span className="font-bold text-white">إجمالي البنود المتوفرة ({catalog.length})</span>
+                  
+                  {/* Local filter input */}
+                  <input 
+                    type="text"
+                    placeholder="ابحث في الكتالوج..."
+                    className="bg-slate-950 border border-slate-850 px-3 py-1.5 rounded-lg text-xs text-slate-300 focus:outline-none focus:border-yellow-500 w-full sm:w-64"
+                    onChange={(e) => {
+                      const val = e.target.value.toLowerCase();
+                      setCatalog(INITIAL_CATALOG.filter(item => item.name.toLowerCase().includes(val)));
+                    }}
+                  />
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-right text-sm">
+                    <thead>
+                      <tr className="bg-slate-950 text-slate-400 text-xs border-b border-slate-800">
+                        <th className="p-4">اسم الصنف / الخدمة</th>
+                        <th className="p-4">النوع</th>
+                        <th className="p-4 text-center">القسم</th>
+                        <th className="p-4 text-left">السعر (ج.م)</th>
+                        <th className="p-4 text-center">الكمية بالخزينة</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800">
+                      {catalog.map(item => (
+                        <tr key={item.id} className="hover:bg-slate-850/50 transition">
+                          <td className="p-4 font-bold text-white">{item.name}</td>
+                          <td className="p-4 text-xs">
+                            <span className={`px-2 py-0.5 rounded-full ${
+                              item.type === 'spare' ? 'bg-amber-500/10 text-amber-400' : 'bg-cyan-500/10 text-cyan-400'
+                            }`}>
+                              {item.type === 'spare' ? 'قطعة غيار' : 'مصنعية / خدمة'}
+                            </span>
+                          </td>
+                          <td className="p-4 text-center text-xs text-slate-400">{item.category}</td>
+                          <td className="p-4 font-mono font-bold text-left text-yellow-400">{item.price.toLocaleString()} ج.م</td>
+                          <td className="p-4 text-center text-xs">
+                            {item.stock > 100 ? (
+                              <span className="text-slate-500">متاحة دوماً</span>
+                            ) : item.stock < 10 ? (
+                              <span className="text-red-400 font-bold bg-red-400/10 px-2 py-0.5 rounded">حرجة ({item.stock})</span>
+                            ) : (
+                              <span className="text-green-400 font-bold bg-green-400/10 px-2 py-0.5 rounded">آمنة ({item.stock})</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+            </div>
+          )}
+
+          {/* ==========================================
+              TAB 4: DIAGNOSTICS HELPER (ADV-DIAG)
+             ========================================== */}
+          {activeTab === 'diag' && (
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-black text-white">مشخص الأعطال والرموز الذكي</h2>
+                  <p className="text-slate-400 text-sm">البحث الفوري عن رموز كمبيوتر السيارة OBD-II (أكواد الأخطاء) والمشورة المهنية لصيانة مركزنا.</p>
+                </div>
+                
+                <button 
+                  onClick={() => setIsDiagAddOpen(!isDiagAddOpen)}
+                  className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-bold px-4 py-2 rounded-lg flex items-center gap-1.5 transition"
+                >
+                  <Plus size={16} />
+                  <span>إضافة رمز كود مخصص</span>
+                </button>
+              </div>
+
+              {/* Add Custom Diag Form */}
+              {isDiagAddOpen && (
+                <div className="bg-slate-900 p-5 rounded-xl border border-yellow-500/20 space-y-4">
+                  <h4 className="font-bold text-yellow-500">أضف كود عطل جديد لتراكم المعرفة الفنية بالمركز</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <input 
+                      type="text" 
+                      placeholder="الرمز (مثال: P0101)" 
+                      value={newDiagCode} 
+                      onChange={(e) => setNewDiagCode(e.target.value)}
+                      className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white"
+                    />
+                    <input 
+                      type="text" 
+                      placeholder="عنوان الخلل باللغة العربية" 
+                      value={newDiagTitle} 
+                      onChange={(e) => setNewDiagTitle(e.target.value)}
+                      className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white md:col-span-2"
+                    />
+                    <textarea 
+                      placeholder="وصف مبسط للخلل" 
+                      value={newDiagDesc} 
+                      onChange={(e) => setNewDiagDesc(e.target.value)}
+                      className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white md:col-span-3 h-20"
+                    />
+                    <input 
+                      type="text" 
+                      placeholder="الأسباب المحتملة الشائعة" 
+                      value={newDiagCauses} 
+                      onChange={(e) => setNewDiagCauses(e.target.value)}
+                      className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white md:col-span-3"
+                    />
+                    <input 
+                      type="text" 
+                      placeholder="طريقة الإصلاح / الحل المقترح" 
+                      value={newDiagSol} 
+                      onChange={(e) => setNewDiagSol(e.target.value)}
+                      className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white md:col-span-3"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={addCustomDiagCode} 
+                      className="bg-yellow-500 hover:bg-yellow-600 text-slate-950 px-4 py-2 rounded-lg text-xs font-bold"
+                    >
+                      حفظ الرمز بالمركز
+                    </button>
+                    <button 
+                      onClick={() => setIsDiagAddOpen(false)} 
+                      className="bg-slate-800 text-slate-300 px-4 py-2 rounded-lg text-xs"
+                    >
+                      إلغاء
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Central diagnostics query board */}
+              <div className="bg-slate-900 p-6 rounded-xl border border-slate-800 space-y-4">
+                <label className="block text-sm font-bold text-slate-300 text-center">أدخل رمز العطل لفحصه الفوري وقراءته</label>
+                <div className="max-w-md mx-auto flex gap-2">
+                  <input 
+                    type="text" 
+                    placeholder="اكتب رمز الخطأ مثل P0300..." 
+                    value={diagSearch}
+                    onChange={(e) => handleDiagSearch(e.target.value)}
+                    className="w-full text-center text-lg font-mono font-bold tracking-widest bg-slate-950 border border-slate-850 rounded-xl px-4 py-3 outline-none focus:border-yellow-500 text-white placeholder:text-slate-600"
+                  />
+                </div>
+
+                {matchedDiag ? (
+                  <div className="mt-6 bg-slate-950 p-6 rounded-xl border border-yellow-500/20 max-w-2xl mx-auto space-y-4 shadow-xl">
+                    <div className="flex items-center justify-between border-b border-slate-850 pb-3">
+                      <div>
+                        <span className="text-xs text-slate-400">النظام المتضرر</span>
+                        <h4 className="font-bold text-white text-sm">{matchedDiag.system}</h4>
+                      </div>
+                      <div className="text-left">
+                        <span className="text-xs text-slate-400">كود المشخص</span>
+                        <h3 className="text-xl font-mono font-black text-yellow-500">{matchedDiag.code}</h3>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div>
+                        <h5 className="font-bold text-white text-sm">العنوان والتشخيص العام:</h5>
+                        <p className="text-sm text-yellow-300 font-bold mt-1">{matchedDiag.title}</p>
+                      </div>
+
+                      <div>
+                        <h5 className="font-bold text-slate-400 text-xs">الشرح الفني للكمبيوتر:</h5>
+                        <p className="text-xs text-slate-300 mt-1 leading-relaxed">{matchedDiag.description}</p>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t border-slate-850">
+                        <div className="bg-red-500/5 p-3 rounded-lg border border-red-500/10">
+                          <h6 className="font-bold text-red-400 text-xs flex items-center gap-1.5">
+                            <AlertTriangle size={12} />
+                            الأسباب الشائعة المرجحة:
+                          </h6>
+                          <p className="text-xs text-slate-300 mt-1.5 leading-relaxed">{matchedDiag.causes}</p>
+                        </div>
+                        <div className="bg-green-500/5 p-3 rounded-lg border border-green-500/10">
+                          <h6 className="font-bold text-green-400 text-xs flex items-center gap-1.5">
+                            <CheckCircle2 size={12} />
+                            خطوات الإصلاح الفنية الموصى بها:
+                          </h6>
+                          <p className="text-xs text-slate-300 mt-1.5 leading-relaxed">{matchedDiag.solution}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-slate-500">
+                    {diagSearch ? (
+                      <p>لم نجد هذا الكود المحدد في القاموس السريع. يرجى مراجعة التهجئة أو إضافته باستخدام زر الإضافة بالأعلى.</p>
+                    ) : (
+                      <p>اكتب رمز عطل OBD2 (مثال: P0420) للحصول على معلومات الإصلاح فوراً.</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Predefined Codes Reference Grid */}
+              <div className="space-y-4">
+                <h3 className="font-bold text-white text-lg">الأكواد الشائعة المسجلة بالمركز</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {diagCodes.map(codeObj => (
+                    <div 
+                      key={codeObj.code} 
+                      onClick={() => handleDiagSearch(codeObj.code)}
+                      className="bg-slate-900 p-4 rounded-xl border border-slate-800 hover:border-yellow-500/30 transition cursor-pointer space-y-2 text-right"
+                    >
+                      <div className="flex justify-between items-center">
+                        <span className="font-mono font-bold text-yellow-400 text-sm">{codeObj.code}</span>
+                        <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded">{codeObj.system}</span>
+                      </div>
+                      <h4 className="font-bold text-white text-xs line-clamp-1">{codeObj.title}</h4>
+                      <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed">{codeObj.description}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+          )}
+
+          {/* ==========================================
+              TAB 5: REPAIRS ARCHIVE / MAINTENANCE HISTORY
+             ========================================== */}
+          {activeTab === 'history' && (
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-2xl font-black text-white">سجل و أرشيف صيانات عملاء المركز</h2>
+                <p className="text-slate-400 text-sm">البحث السريع واستخراج تقارير وفواتير السيارات التي تم صيانتها مسبقاً برقم اللوحة أو الهاتف.</p>
+              </div>
+
+              {/* Archive Search Engine */}
+              <div className="bg-slate-900 p-5 rounded-xl border border-slate-800 space-y-4">
+                <div className="max-w-xl mx-auto space-y-3">
+                  <label className="block text-sm font-bold text-slate-300 text-center">ابحث في قاعدة بيانات العملاء برقم اللوحة أو الهاتف</label>
+                  <div className="flex gap-2">
+                    <input 
+                      type="text" 
+                      placeholder="مثال: أ ج ط ١٢٣٤ أو 01002345678" 
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="bg-slate-950 border border-slate-850 rounded-lg px-4 py-2.5 text-sm w-full outline-none focus:border-yellow-500 text-center text-white"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Archive Results */}
+              <div className="space-y-4">
+                <h3 className="font-bold text-white text-lg">السيارات المطابقة للبحث</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {repairs.filter(r => (
+                    r.plateNumber.includes(searchQuery) ||
+                    r.customerName.includes(searchQuery) ||
+                    r.customerPhone.includes(searchQuery)
+                  )).map(job => {
+                    const subtotal = job.billItems.reduce((acc, item) => acc + (item.price * (item.qty || 1)), 0);
+                    const total = subtotal - (job.discount || 0);
+
+                    return (
+                      <div key={job.id} className="bg-slate-900 p-5 rounded-xl border border-slate-800 hover:border-yellow-500/20 transition space-y-4">
+                        <div className="flex justify-between items-start border-b border-slate-850 pb-3">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className="bg-slate-950 text-yellow-400 border border-yellow-500/30 text-xs font-black px-2.5 py-1 rounded">
+                                {job.plateNumber}
+                              </span>
+                              <h4 className="font-bold text-white text-sm">{job.carModel}</h4>
+                            </div>
+                            <p className="text-xs text-slate-400 flex items-center gap-1">
+                              <User size={12} /> {job.customerName} | <Phone size={12} /> {job.customerPhone}
+                            </p>
+                          </div>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                            job.status === 'ready' ? 'bg-green-500/20 text-green-400' : 'bg-amber-500/20 text-amber-400'
+                          }`}>
+                            {job.status === 'ready' ? 'صيانة منتهية' : 'قيد الصيانة حالياً'}
+                          </span>
+                        </div>
+
+                        {/* Past Details info */}
+                        <div className="space-y-2 text-xs">
+                          <div className="flex justify-between">
+                            <span className="text-slate-400">تاريخ الدخول:</span>
+                            <span className="font-bold text-white">{job.intakeDate}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-slate-400">الفني المسؤول:</span>
+                            <span className="font-bold text-yellow-400">{job.mechanic}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-slate-400">الشكوى / الخلل:</span>
+                            <span className="font-semibold text-slate-300">{job.issue}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-slate-400">التكلفة الإجمالية:</span>
+                            <span className="font-mono font-bold text-green-400">{total.toLocaleString()} ج.م</span>
+                          </div>
+                        </div>
+
+                        {/* Inspection Result if any */}
+                        {job.inspectionResult ? (
+                          <div className="bg-slate-950 p-3 rounded-lg border border-slate-850">
+                            <span className="text-[10px] text-yellow-500 font-bold block mb-1">نتيجة الفحص الفني المرفق للسيارة:</span>
+                            <div className="grid grid-cols-5 gap-1 text-center text-[10px] font-bold text-white">
+                              <div className={`p-1 rounded ${job.inspectionResult.engine === 'pass' ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>محرك</div>
+                              <div className={`p-1 rounded ${job.inspectionResult.brakes === 'pass' ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>فرامل</div>
+                              <div className={`p-1 rounded ${job.inspectionResult.suspension === 'pass' ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>عفشة</div>
+                              <div className={`p-1 rounded ${job.inspectionResult.fluids === 'pass' ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>سوائل</div>
+                              <div className={`p-1 rounded ${job.inspectionResult.electronics === 'pass' ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>كهرباء</div>
+                            </div>
+                            <p className="text-[11px] text-slate-400 mt-2 italic">"{job.inspectionResult.notes}"</p>
+                          </div>
+                        ) : (
+                          <div className="text-[11px] text-slate-500 bg-slate-950 p-2 rounded text-center">لا يوجد فحص مسجل لهذه الصيانة.</div>
+                        )}
+
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={() => openBillEditor(job)}
+                            className="w-full bg-slate-850 hover:bg-slate-800 text-slate-200 text-xs py-2 rounded-lg font-bold flex items-center justify-center gap-1"
+                          >
+                            <FileText size={12} />
+                            <span>تفاصيل الفاتورة والحساب</span>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {repairs.filter(r => (
+                    r.plateNumber.includes(searchQuery) ||
+                    r.customerName.includes(searchQuery) ||
+                    r.customerPhone.includes(searchQuery)
+                  )).length === 0 && (
+                    <p className="text-slate-500 text-center py-6 text-sm col-span-2">لا توجد سجلات مطابقة للبحث حالياً.</p>
+                  )}
+                </div>
+              </div>
+
+            </div>
+          )}
+
+        </main>
+      </div>
+
+      {/* ==========================================
+          MODAL: INTAKE / NEW REPAIR (أمر إصلاح جديد)
+         ========================================== */}
+      {isNewRepairModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
+            <div className="bg-slate-950 p-4 border-b border-slate-800 flex items-center justify-between">
+              <h3 className="font-bold text-white text-base">إنشاء أمر إصلاح واستلام سيارة جديدة</h3>
+              <button onClick={() => setIsNewRepairModalOpen(false)} className="text-slate-400 hover:text-white p-1 rounded">
+                <X size={20} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleCreateRepair} className="p-5 space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs text-slate-400 font-bold block">رقم اللوحة السيارة <span className="text-red-500">*</span></label>
+                  <input 
+                    type="text" 
+                    placeholder="مثال: أ ج ط ١٢٣٤" 
+                    value={newPlate} 
+                    onChange={(e) => setNewPlate(e.target.value)} 
+                    required
+                    className="w-full bg-slate-950 border border-slate-850 focus:border-yellow-500 outline-none rounded-lg px-3 py-2 text-sm text-center font-bold text-yellow-400"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs text-slate-400 font-bold block">ماركة وموديل السيارة <span className="text-red-500">*</span></label>
+                  <input 
+                    type="text" 
+                    placeholder="مثال: هيونداي توسان 2022" 
+                    value={newModel} 
+                    onChange={(e) => setNewModel(e.target.value)} 
+                    required
+                    className="w-full bg-slate-950 border border-slate-850 focus:border-yellow-500 outline-none rounded-lg px-3 py-2 text-sm text-white"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs text-slate-400 font-bold block">اسم العميل بالكامل <span className="text-red-500">*</span></label>
+                  <input 
+                    type="text" 
+                    placeholder="اسم صاحب السيارة" 
+                    value={newCustName} 
+                    onChange={(e) => setNewCustName(e.target.value)} 
+                    required
+                    className="w-full bg-slate-950 border border-slate-850 focus:border-yellow-500 outline-none rounded-lg px-3 py-2 text-sm text-white"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs text-slate-400 font-bold block">رقم هاتف العميل (للواتساب)</label>
+                  <input 
+                    type="tel" 
+                    placeholder="مثال: 01002345678" 
+                    value={newCustPhone} 
+                    onChange={(e) => setNewCustPhone(e.target.value)} 
+                    className="w-full bg-slate-950 border border-slate-850 focus:border-yellow-500 outline-none rounded-lg px-3 py-2 text-sm text-white text-left font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs text-slate-400 font-bold block">شكوى العميل / الأعمال المطلوبة صيانتاً</label>
+                <textarea 
+                  placeholder="وصف المشكلة بدقة مثل: رجة بالسرعات، زيت ترشيح، تغيير فلاتر" 
+                  value={newIssue} 
+                  onChange={(e) => setNewIssue(e.target.value)} 
+                  className="w-full bg-slate-950 border border-slate-850 focus:border-yellow-500 outline-none rounded-lg px-3 py-2 text-sm text-white h-20"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs text-slate-400 font-bold block">الفني أو المهندس المسؤول عن السيارة</label>
+                <select 
+                  value={newMechanic} 
+                  onChange={(e) => setNewMechanic(e.target.value)} 
+                  className="w-full bg-slate-950 border border-slate-850 focus:border-yellow-500 outline-none rounded-lg px-3 py-2 text-sm text-white"
+                >
+                  <option value="المهندس مصطفى">المهندس مصطفى (مدير الورشة وكشف كمبيوتر)</option>
+                  <option value="الأسطواني صبري">الأسطواني صبري (أخصائي عفشة ومساعدين)</option>
+                  <option value="المهندس رامي الكهربائي">المهندس رامي الكهربائي (أعطال كهرباء وتكييف)</option>
+                  <option value="غير محدد">تحديد لاحقاً / بانتظار التوزيع</option>
+                </select>
+              </div>
+
+              <div className="pt-3 border-t border-slate-850 flex gap-2">
+                <button 
+                  type="submit" 
+                  className="w-full bg-yellow-500 hover:bg-yellow-600 text-slate-950 font-black py-2.5 rounded-lg text-sm transition"
+                >
+                  تسجيل واستلام السيارة بالمركز
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => setIsNewRepairModalOpen(false)}
+                  className="bg-slate-800 text-slate-300 px-4 py-2 rounded-lg text-sm transition hover:bg-slate-700"
+                >
+                  إلغاء
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ==========================================
+          MODAL: FAST BILL / AL FATOORA (الفاتورة الفورية السريعة والواتساب)
+         ========================================== */}
+      {isBillModalOpen && selectedRepairForBill && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-4xl overflow-hidden shadow-2xl flex flex-col md:flex-row h-[90vh]">
+            
+            {/* Left/Main Block: Invoice Generator */}
+            <div className="flex-1 p-5 flex flex-col justify-between overflow-y-auto">
+              <div>
+                <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+                  <div>
+                    <span className="text-[10px] text-slate-400 block font-bold">أمر إصلاح رقم: {selectedRepairForBill.id}</span>
+                    <h3 className="font-bold text-white text-base">منشئ الفواتير والتحصيل الفوري</h3>
+                  </div>
+                  <div className="text-left">
+                    <span className="bg-yellow-500 text-slate-950 font-black text-xs px-2.5 py-1 rounded">
+                      {selectedRepairForBill.plateNumber}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Patient / Car info summary */}
+                <div className="bg-slate-950 p-3 rounded-lg border border-slate-850 mb-4 grid grid-cols-2 gap-2 text-xs">
+                  <div><strong className="text-slate-400">العميل:</strong> {selectedRepairForBill.customerName}</div>
+                  <div><strong className="text-slate-400">السيارة:</strong> {selectedRepairForBill.carModel}</div>
+                  <div><strong className="text-slate-400">المهندس:</strong> {selectedRepairForBill.mechanic}</div>
+                  <div><strong className="text-slate-400">الشكوى:</strong> <span className="text-yellow-400">{selectedRepairForBill.issue}</span></div>
+                </div>
+
+                {/* Invoice Items Editing Table */}
+                <div className="space-y-3">
+                  <h4 className="font-bold text-white text-xs">بنود الفاتورة الحالية:</h4>
+                  <div className="bg-slate-950 rounded-lg overflow-hidden border border-slate-850 max-h-[220px] overflow-y-auto">
+                    <table className="w-full text-right text-xs">
+                      <thead className="bg-slate-900 text-slate-400 font-bold border-b border-slate-850">
+                        <tr>
+                          <th className="p-2">البند / الخدمة</th>
+                          <th className="p-2 text-center">الكمية</th>
+                          <th className="p-2 text-left">سعر الوحدة</th>
+                          <th className="p-2 text-left">الإجمالي</th>
+                          <th className="p-2 text-center">إجراء</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-850">
+                        {billItemsTemp.map((item, index) => (
+                          <tr key={index} className="hover:bg-slate-900/40">
+                            <td className="p-2 font-bold text-white">{item.name}</td>
+                            <td className="p-2 text-center">
+                              <input 
+                                type="number" 
+                                min="1" 
+                                value={item.qty || 1} 
+                                onChange={(e) => {
+                                  const val = Math.max(1, Number(e.target.value));
+                                  setBillItemsTemp(prev => prev.map((it, idx) => idx === index ? { ...it, qty: val } : it));
+                                }}
+                                className="bg-slate-900 border border-slate-800 text-center w-12 rounded px-1 text-white py-0.5 font-bold"
+                              />
+                            </td>
+                            <td className="p-2 text-left font-mono">{item.price.toLocaleString()} ج.م</td>
+                            <td className="p-2 text-left font-mono font-bold text-yellow-400">{(item.price * (item.qty || 1)).toLocaleString()} ج.م</td>
+                            <td className="p-2 text-center">
+                              <button onClick={() => removeBillItemTemp(index)} className="text-red-400 hover:text-red-500">
+                                <Trash2 size={14} />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                        {billItemsTemp.length === 0 && (
+                          <tr>
+                            <td colSpan="5" className="p-4 text-center text-slate-500">لا توجد بنود مضافة لهذه الفاتورة بعد. استخدم القائمة الجانبية لإضافة بنود.</td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Discount input */}
+                  <div className="flex items-center justify-between bg-slate-950 p-3 rounded-lg border border-slate-850">
+                    <span className="text-xs text-slate-400 font-bold">خصم خاص للعميل العباسي (ج.م):</span>
+                    <input 
+                      type="number" 
+                      placeholder="خصم بالجنيه" 
+                      value={billDiscountTemp} 
+                      onChange={(e) => setBillDiscountTemp(e.target.value)} 
+                      className="bg-slate-900 border border-slate-800 text-center w-24 rounded-lg px-2 py-1 text-xs text-white font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Total Summary Block */}
+              <div className="pt-4 border-t border-slate-850 space-y-3 bg-slate-900">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-slate-400 font-bold">الإجمالي قبل الخصم:</span>
+                  <span className="font-mono font-bold text-white text-sm">
+                    {billItemsTemp.reduce((acc, item) => acc + (item.price * (item.qty || 1)), 0).toLocaleString()} ج.م
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-slate-400 font-bold">الخصم الممنوح:</span>
+                  <span className="font-mono font-bold text-red-400 text-sm">-{Number(billDiscountTemp).toLocaleString()} ج.م</span>
+                </div>
+                <div className="flex justify-between items-center bg-yellow-500/10 p-3 rounded-lg border border-yellow-500/20">
+                  <span className="text-sm text-yellow-500 font-black">المطلوب سداده نهائياً:</span>
+                  <span className="font-mono font-black text-yellow-400 text-lg">
+                    {Math.max(0, billItemsTemp.reduce((acc, item) => acc + (item.price * (item.qty || 1)), 0) - Number(billDiscountTemp)).toLocaleString()} ج.م
+                  </span>
+                </div>
+
+                <div className="flex gap-2">
+                  <button 
+                    onClick={saveBill}
+                    className="w-full bg-yellow-500 hover:bg-yellow-600 text-slate-950 font-black py-3 rounded-xl text-sm transition shadow-lg flex items-center justify-center gap-1.5"
+                  >
+                    <CheckCircle2 size={16} />
+                    <span>حفظ وتحديث الفاتورة</span>
+                  </button>
+                  <button 
+                    onClick={() => {
+                      window.print();
+                    }}
+                    className="bg-slate-800 hover:bg-slate-700 text-slate-200 px-4 py-3 rounded-xl text-xs font-bold transition flex items-center gap-1.5"
+                  >
+                    <Printer size={16} />
+                    <span>طباعة</span>
+                  </button>
+                  <button 
+                    onClick={() => setIsBillModalOpen(false)}
+                    className="bg-slate-950 text-slate-400 hover:text-white px-4 py-3 rounded-xl text-xs transition"
+                  >
+                    إغلاق
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Block: Fast Catalog quick adder & WhatsApp preview mockup */}
+            <div className="w-full md:w-80 bg-slate-950 border-r md:border-r border-t md:border-t-0 border-slate-850 p-5 flex flex-col justify-between overflow-y-auto">
+              
+              {/* Quick Catalog items search list */}
+              <div className="space-y-3">
+                <h4 className="font-bold text-white text-xs border-b border-slate-850 pb-2">إضافة سريعة للفاتورة من الكتالوج</h4>
+                <div className="relative">
+                  <input 
+                    type="text" 
+                    placeholder="ابحث وصَفّي البنود..." 
+                    className="bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-[11px] w-full focus:outline-none"
+                    onChange={(e) => {
+                      const val = e.target.value.toLowerCase();
+                      // Simple dynamic local filter
+                    }}
+                  />
+                </div>
+                <div className="space-y-1 max-h-[160px] overflow-y-auto pr-1">
+                  {catalog.map(item => (
+                    <div 
+                      key={item.id} 
+                      onClick={() => addItemToBillTemp(item)}
+                      className="bg-slate-900 hover:bg-slate-850 p-2 rounded border border-slate-850 cursor-pointer flex items-center justify-between text-xs transition"
+                    >
+                      <span className="font-bold text-white line-clamp-1">{item.name}</span>
+                      <span className="font-mono text-yellow-500 font-bold shrink-0">{item.price} ج</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* WhatsApp Mockup Preview */}
+              <div className="space-y-3 mt-4 border-t border-slate-800 pt-4">
+                <h4 className="font-bold text-green-400 text-xs flex items-center gap-1">
+                  <Send size={12} />
+                  تحديث فوري للعميل (واتساب)
+                </h4>
+                
+                {/* Simulated WhatsApp message window */}
+                <div className="bg-[#0b141a] p-3 rounded-lg border border-slate-800 text-[10px] space-y-2 font-sans relative">
+                  <div className="absolute top-1.5 left-1.5 w-2 h-2 bg-green-500 rounded-full animate-ping"></div>
+                  <div className="bg-[#202c33] text-slate-100 p-2.5 rounded-lg rounded-tr-none relative max-w-[90%] mr-auto">
+                    <p className="font-bold text-yellow-400 mb-1">مركز أوتو إكسبريس العباسي 🚗</p>
+                    <p className="leading-relaxed">
+                      عميلنا العزيز <strong className="text-white">{selectedRepairForBill.customerName}</strong>، نود إعلامك أن سيارتك <strong className="text-white">{selectedRepairForBill.carModel}</strong> ذات اللوحة ({selectedRepairForBill.plateNumber}) قيد الصيانة حالياً وتحت إشراف {selectedRepairForBill.mechanic}.
+                    </p>
+                    <p className="mt-1">
+                      إجمالي التكلفة التقديرية الحالية: <strong className="text-green-400 font-mono">
+                        {Math.max(0, billItemsTemp.reduce((acc, item) => acc + (item.price * (item.qty || 1)), 0) - Number(billDiscountTemp)).toLocaleString()} ج.م
+                      </strong>
+                    </p>
+                    <p className="text-[9px] text-yellow-500 font-bold mt-1.5">🔑 إرتاح وسلّمنا المفتاح!</p>
+                  </div>
+                </div>
+
+                <button 
+                  onClick={() => {
+                    const message = `عميلنا العزيز ${selectedRepairForBill.customerName}، سيارتك ${selectedRepairForBill.carModel} (${selectedRepairForBill.plateNumber}) قيد الصيانة بمركز أوتو إكسبريس العباسي. إجمالي التكلفة الحالية: ${Math.max(0, billItemsTemp.reduce((acc, item) => acc + (item.price * (item.qty || 1)), 0) - Number(billDiscountTemp))} ج.م. إرتاح وسلمنا المفتاح!`;
+                    const encodedText = encodeURIComponent(message);
+                    window.open(`https://wa.me/${selectedRepairForBill.customerPhone.replace(/[^0-9]/g, '')}?text=${encodedText}`, '_blank');
+                  }}
+                  className="w-full bg-[#25d366] hover:bg-green-600 text-slate-950 font-black py-2 rounded-lg text-xs transition flex items-center justify-center gap-1"
+                >
+                  <Send size={12} />
+                  <span>إرسال تحديث للعميل بالواتساب</span>
+                </button>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* ==========================================
+          MODAL: CAR INSPECTION CHECKLIST (تقرير الفحص الفني)
+         ========================================== */}
+      {isInspectionModalOpen && selectedRepairForInspection && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
+            <div className="bg-slate-950 p-4 border-b border-slate-800 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] text-slate-400 block font-bold">نموذج فحص السيارات التفاعلي</span>
+                <h3 className="font-bold text-white text-base">تقرير فحص سيارة: {selectedRepairForInspection.carModel}</h3>
+              </div>
+              <button onClick={() => setIsInspectionModalOpen(false)} className="text-slate-400 hover:text-white p-1 rounded">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4">
+              
+              {/* Core Checkpoints */}
+              <div className="space-y-3">
+                <h4 className="text-xs text-slate-400 font-bold block mb-1">حدد حالة كل نظام بالسيارة بعد كشف كمبيوتر والفحص البصري:</h4>
+                
+                {/* Point 1: Engine */}
+                <div className="flex items-center justify-between bg-slate-950 p-2.5 rounded-lg border border-slate-850">
+                  <span className="text-xs font-bold text-white">1. المحرك وصندوق التروس (Engine & Transmission)</span>
+                  <div className="flex gap-1.5">
+                    <button 
+                      onClick={() => setInspectEngine('pass')}
+                      className={`text-[10px] font-bold px-2 py-1 rounded transition ${inspectEngine === 'pass' ? 'bg-green-500 text-slate-950' : 'bg-slate-900 text-slate-400'}`}
+                    >
+                      سليم
+                    </button>
+                    <button 
+                      onClick={() => setInspectEngine('warning')}
+                      className={`text-[10px] font-bold px-2 py-1 rounded transition ${inspectEngine === 'warning' ? 'bg-amber-500 text-slate-950' : 'bg-slate-900 text-slate-400'}`}
+                    >
+                      ملاحظات
+                    </button>
+                    <button 
+                      onClick={() => setInspectEngine('fail')}
+                      className={`text-[10px] font-bold px-2 py-1 rounded transition ${inspectEngine === 'fail' ? 'bg-red-500 text-white' : 'bg-slate-900 text-slate-400'}`}
+                    >
+                      تالف
+                    </button>
+                  </div>
+                </div>
+
+                {/* Point 2: Brakes */}
+                <div className="flex items-center justify-between bg-slate-950 p-2.5 rounded-lg border border-slate-850">
+                  <span className="text-xs font-bold text-white">2. الفرامل والتيل والطنابير (Braking System)</span>
+                  <div className="flex gap-1.5">
+                    <button 
+                      onClick={() => setInspectBrakes('pass')}
+                      className={`text-[10px] font-bold px-2 py-1 rounded transition ${inspectBrakes === 'pass' ? 'bg-green-500 text-slate-950' : 'bg-slate-900 text-slate-400'}`}
+                    >
+                      سليم
+                    </button>
+                    <button 
+                      onClick={() => setInspectBrakes('warning')}
+                      className={`text-[10px] font-bold px-2 py-1 rounded transition ${inspectBrakes === 'warning' ? 'bg-amber-500 text-slate-950' : 'bg-slate-900 text-slate-400'}`}
+                    >
+                      ملاحظات
+                    </button>
+                    <button 
+                      onClick={() => setInspectBrakes('fail')}
+                      className={`text-[10px] font-bold px-2 py-1 rounded transition ${inspectBrakes === 'fail' ? 'bg-red-500 text-white' : 'bg-slate-900 text-slate-400'}`}
+                    >
+                      تالف
+                    </button>
+                  </div>
+                </div>
+
+                {/* Point 3: Suspension */}
+                <div className="flex items-center justify-between bg-slate-950 p-2.5 rounded-lg border border-slate-850">
+                  <span className="text-xs font-bold text-white">3. نظام العفشة والتوجيه (Suspension & Steering)</span>
+                  <div className="flex gap-1.5">
+                    <button 
+                      onClick={() => setInspectSuspension('pass')}
+                      className={`text-[10px] font-bold px-2 py-1 rounded transition ${inspectSuspension === 'pass' ? 'bg-green-500 text-slate-950' : 'bg-slate-900 text-slate-400'}`}
+                    >
+                      سليم
+                    </button>
+                    <button 
+                      onClick={() => setInspectSuspension('warning')}
+                      className={`text-[10px] font-bold px-2 py-1 rounded transition ${inspectSuspension === 'warning' ? 'bg-amber-500 text-slate-950' : 'bg-slate-900 text-slate-400'}`}
+                    >
+                      ملاحظات
+                    </button>
+                    <button 
+                      onClick={() => setInspectSuspension('fail')}
+                      className={`text-[10px] font-bold px-2 py-1 rounded transition ${inspectSuspension === 'fail' ? 'bg-red-500 text-white' : 'bg-slate-900 text-slate-400'}`}
+                    >
+                      تالف
+                    </button>
+                  </div>
+                </div>
+
+                {/* Point 4: Fluids */}
+                <div className="flex items-center justify-between bg-slate-950 p-2.5 rounded-lg border border-slate-850">
+                  <span className="text-xs font-bold text-white">4. مستويات السوائل والزيوت (Fluids & Oils)</span>
+                  <div className="flex gap-1.5">
+                    <button 
+                      onClick={() => setInspectFluids('pass')}
+                      className={`text-[10px] font-bold px-2 py-1 rounded transition ${inspectFluids === 'pass' ? 'bg-green-500 text-slate-950' : 'bg-slate-900 text-slate-400'}`}
+                    >
+                      سليم
+                    </button>
+                    <button 
+                      onClick={() => setInspectFluids('warning')}
+                      className={`text-[10px] font-bold px-2 py-1 rounded transition ${inspectFluids === 'warning' ? 'bg-amber-500 text-slate-950' : 'bg-slate-900 text-slate-400'}`}
+                    >
+                      ملاحظات
+                    </button>
+                    <button 
+                      onClick={() => setInspectFluids('fail')}
+                      className={`text-[10px] font-bold px-2 py-1 rounded transition ${inspectFluids === 'fail' ? 'bg-red-500 text-white' : 'bg-slate-900 text-slate-400'}`}
+                    >
+                      تالف
+                    </button>
+                  </div>
+                </div>
+
+                {/* Point 5: Electronics */}
+                <div className="flex items-center justify-between bg-slate-950 p-2.5 rounded-lg border border-slate-850">
+                  <span className="text-xs font-bold text-white">5. الأنظمة الكهربائية واللمبات (Electronics)</span>
+                  <div className="flex gap-1.5">
+                    <button 
+                      onClick={() => setInspectElectronics('pass')}
+                      className={`text-[10px] font-bold px-2 py-1 rounded transition ${inspectElectronics === 'pass' ? 'bg-green-500 text-slate-950' : 'bg-slate-900 text-slate-400'}`}
+                    >
+                      سليم
+                    </button>
+                    <button 
+                      onClick={() => setInspectElectronics('warning')}
+                      className={`text-[10px] font-bold px-2 py-1 rounded transition ${inspectElectronics === 'warning' ? 'bg-amber-500 text-slate-950' : 'bg-slate-900 text-slate-400'}`}
+                    >
+                      ملاحظات
+                    </button>
+                    <button 
+                      onClick={() => setInspectElectronics('fail')}
+                      className={`text-[10px] font-bold px-2 py-1 rounded transition ${inspectElectronics === 'fail' ? 'bg-red-500 text-white' : 'bg-slate-900 text-slate-400'}`}
+                    >
+                      تالف
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Notes Input */}
+              <div className="space-y-1">
+                <label className="text-xs text-slate-400 font-bold block">ملاحظات الفحص التفصيلية وتوصيات المهندس:</label>
+                <textarea 
+                  placeholder="اكتب التوصيات الخاصة بالفحص مثل: تيل الفرامل يحتاج لتغيير فوري، زيت فتيس ناقص" 
+                  value={inspectNotes} 
+                  onChange={(e) => setInspectNotes(e.target.value)} 
+                  className="w-full bg-slate-950 border border-slate-850 focus:border-yellow-500 outline-none rounded-lg px-3 py-2 text-xs text-white h-20"
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="pt-3 border-t border-slate-850 flex gap-2">
+                <button 
+                  onClick={saveInspection}
+                  className="w-full bg-yellow-500 hover:bg-yellow-600 text-slate-950 font-black py-2.5 rounded-lg text-sm transition"
+                >
+                  حفظ تقرير الفحص وإرفاقه بالسيارة
+                </button>
+                <button 
+                  onClick={() => setIsInspectionModalOpen(false)}
+                  className="bg-slate-800 text-slate-300 px-4 py-2 rounded-lg text-sm"
+                >
+                  إلغاء
+                </button>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+}
+
+// ==========================================
+// INNER COMPONENT: REPAIR CARD
+// ==========================================
+function RepairCard({ repair, onStatusChange, openBill, openInspect, onDelete }) {
+  const subtotal = repair.billItems.reduce((acc, item) => acc + (item.price * (item.qty || 1)), 0);
+  const total = subtotal - (repair.discount || 0);
+
+  return (
+    <div className="bg-slate-950 p-4 rounded-xl border border-slate-850 hover:border-slate-700 transition space-y-3 relative overflow-hidden group">
+      
+      {/* Delete quick handler */}
+      <button 
+        onClick={() => onDelete(repair.id)}
+        className="absolute top-2 left-2 text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition duration-200"
+        title="حذف أمر الصيانة"
+      >
+        <Trash2 size={12} />
+      </button>
+
+      {/* Plate and Car Info */}
+      <div className="space-y-1">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="bg-slate-900 text-yellow-400 border border-yellow-500/20 text-[11px] font-black px-2 py-0.5 rounded tracking-wide">
+            {repair.plateNumber}
+          </span>
+          <span className="text-[10px] text-slate-500 font-bold">{repair.id}</span>
+        </div>
+        <h4 className="font-bold text-white text-sm mt-1">{repair.carModel}</h4>
+      </div>
+
+      {/* Customer Info */}
+      <div className="space-y-0.5 text-xs text-slate-400">
+        <p className="flex items-center gap-1">
+          <User size={11} className="text-slate-500" />
+          <span className="font-medium text-slate-300 line-clamp-1">{repair.customerName}</span>
+        </p>
+        <p className="flex items-center gap-1 font-mono text-[10px]">
+          <Phone size={11} className="text-slate-500" />
+          <span>{repair.customerPhone}</span>
+        </p>
+      </div>
+
+      {/* Issue details block */}
+      <div className="bg-slate-900/50 p-2 rounded text-xs border border-slate-850/40 text-yellow-300 font-semibold line-clamp-2">
+        🛠️ {repair.issue}
+      </div>
+
+      {/* Financials & Status Changer */}
+      <div className="pt-2 border-t border-slate-850/60 flex items-center justify-between text-xs gap-2">
+        <div className="flex flex-col">
+          <span className="text-[10px] text-slate-500">حساب الفاتورة</span>
+          <span className="font-mono font-bold text-green-400 text-xs">{total.toLocaleString()} ج.م</span>
+        </div>
+
+        {/* Rapid Stage Transition Select Box */}
+        <div className="flex items-center gap-1">
+          <select 
+            value={repair.status}
+            onChange={(e) => onStatusChange(repair.id, e.target.value)}
+            className="bg-slate-900 border border-slate-800 text-[10px] font-bold rounded-lg px-2 py-1 text-slate-300 outline-none focus:border-yellow-500"
+          >
+            <option value="pending">بانتظار الفحص</option>
+            <option value="in-progress">قيد العمل</option>
+            <option value="testing">تحت التجربة</option>
+            <option value="ready">جاهزة للتسليم</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Quick Tool Links inside Card */}
+      <div className="grid grid-cols-2 gap-1.5 pt-1.5">
+        <button 
+          onClick={() => openInspect(repair)}
+          className={`px-2 py-1.5 rounded text-[10px] font-black transition flex items-center justify-center gap-1 ${
+            repair.inspectionResult ? 'bg-green-500/15 text-green-400' : 'bg-slate-900 hover:bg-slate-850 text-slate-300'
+          }`}
+        >
+          <ClipboardCheck size={11} />
+          <span>{repair.inspectionResult ? 'تم الفحص ✓' : 'افحص الآن'}</span>
+        </button>
+        <button 
+          onClick={() => openBill(repair)}
+          className="bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-500 border border-yellow-500/20 px-2 py-1.5 rounded text-[10px] font-black transition flex items-center justify-center gap-1"
+        >
+          <DollarSign size={11} />
+          <span>الفاتورة والدفع</span>
+        </button>
+      </div>
+
+    </div>
+  );
+}
